@@ -1,0 +1,75 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f5f5f5;
+    color: #333;
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+h1 {
+    color: #000080; /* Navy color */
+    text-align: center; /* Center the text */
+}
+
+form {
+    margin-top: 20px;
+    text-align: center; /* Center the form content */
+}
+
+select {
+    width: 100%; /* Expand the dropdown list to full width of the form */
+    padding: 8px 12px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+input[type="submit"] {
+    background-color: #000080; /* Navy color */
+    color: #fff;
+    cursor: pointer;
+    display: block; /* Make the button full width */
+    width: 100%; /* Make the button full width */
+    margin-top: 10px; /* Additional margin spacing */
+}
+
+input[type="submit"]:hover {
+    background-color: #00008b; /* Dark navy color */
+}
+
+.table-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+table {
+    width: 100%;
+    margin: 0 auto;
+}
+
+th, td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+th {
+    background-color: #000080;
+    color: white;
+}
+
+tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
