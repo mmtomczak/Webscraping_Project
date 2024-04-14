@@ -8,9 +8,8 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.action_chains import ActionChains
 from bs4 import BeautifulSoup
 import requests
-import datetime
-import time
 import re
+
 
 class MoviesSpider(scrapy.Spider):
     name = "moviespider"
@@ -78,12 +77,13 @@ class MoviesSpider(scrapy.Spider):
         )
         if self.genre:
             actions.move_to_element(url).click().perform()
-            genre_xpath = f"//ul[@id='with_genres']/li/a[contains(text(), '{self.genre}')]"
-            WebDriverWait(self.driver, 10).until(EC.visibility_of_element_located(
-                (By.XPATH, genre_xpath)
-            ))
-            genre = self.driver.find_element(By.XPATH, genre_xpath)
-            actions.move_to_element(genre).click().perform()
+            for genre in self.genre:
+                genre_xpath = f"//ul[@id='with_genres']/li/a[contains(text(), '{genre}')]"
+                WebDriverWait(self.driver, 10).until(EC.visibility_of_element_located(
+                    (By.XPATH, genre_xpath)
+                ))
+                genre = self.driver.find_element(By.XPATH, genre_xpath)
+                actions.move_to_element(genre).click().perform()
             search_btn_xpath = "//p[@class='load_more']/a[contains(@class, 'no_click') and contains(@class, 'load_more')]"
             WebDriverWait(self.driver, 10).until(EC.element_to_be_clickable(
                 (By.XPATH, search_btn_xpath)
@@ -97,7 +97,7 @@ class MoviesSpider(scrapy.Spider):
         self.driver.execute_script("arguments[0].click();", load_more_btn)
 
         loaded_content_xpath = "/html/body/div[1]/main/section/div/div/div/div[2]/div[2]/div/section/div/div[2]"
-        WebDriverWait(self.driver, 10).until(EC.visibility_of_element_located(
+        WebDriverWait(self.driver, 30).until(EC.visibility_of_element_located(
             (By.XPATH, loaded_content_xpath)
         ))
 
@@ -109,7 +109,6 @@ class MoviesSpider(scrapy.Spider):
             # move to the next page url
             self.log(f"Scrapped page {i}")
             self.driver.execute_script("window.scrollBy(0, document.body.scrollHeight);")
-        time.sleep(10)
 
     def parse_page(self, response):
         """
@@ -129,7 +128,9 @@ class MoviesSpider(scrapy.Spider):
         soup = BeautifulSoup(requests.get(response.url + "?language=en",headers=headers).text, "html.parser")
 
         movie_item["title"] = soup.select(f".title")[0].select("h2")[0].select("a")[0].text
-        movie_item["release_date"] = soup.select("span.release")[0].text.strip()
+        release_date = soup.select("span.release")[0].text.strip()
+        release_date = re.sub("([ (A-Za-z)])", "", release_date)
+        movie_item["release_date"] = release_date
         movie_item["genres"] = ", ". join([item.text for item in soup.select("span.genres")[0].findAll('a')])
         movie_item["runtime"] = soup.select("span.runtime")[0].text.strip()
         movie_item["user_score"] = int(soup.select("div.user_score_chart")[0].attrs["data-percent"])
@@ -147,6 +148,6 @@ class MoviesSpider(scrapy.Spider):
         )
         for item in items:
             content = item.find_element(By.XPATH, "./div[@class='content']")
-            urls.append(content.find_element(By.XPATH,"./h2/a").get_attribute("href"))
+            urls.append(content.find_element(By.XPATH, "./h2/a").get_attribute("href"))
         return urls
 
