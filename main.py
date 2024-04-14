@@ -9,5 +9,5 @@ process = CrawlerProcess({
 
 # category=1 -> movies
 # category=2 -> series
-process.crawl(MoviesSpider, category=2, num_pages=4)
+process.crawl(MoviesSpider, category=1, num_pages=2, genre="Action")
 process.start() # the script will block here until the crawling is finished

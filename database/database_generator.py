@@ -20,23 +20,21 @@ class DatabaseGenerator:
         # drop all tables
         self.cur.execute("DROP TABLE IF EXISTS movies")
         self.cur.execute("DROP TABLE IF EXISTS series")
+        self.cur.execute("DROP TABLE IF EXISTS data")
         # create tables
         self.cur.execute('''
-        CREATE TABLE movies(
-            id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-            title VARCHAR(200) NOT NULL,
-            user_score INTEGER NOT NULL,
-            release_date VARCHAR(200),
-            url VARCHAR(300) NOT NULL
-        )
         ''')
         self.cur.execute('''
-        CREATE TABLE series(
+        CREATE TABLE data(
             id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
             title VARCHAR(200) NOT NULL,
             user_score INTEGER NOT NULL,
             release_date VARCHAR(200),
-            url VARCHAR(300) NOT NULL
+            url VARCHAR(300) NOT NULL,
+            genres VARCHAR(300),
+            runtime VARCHAR(200),
+            description TEXT,
+            director VARCHAR(200)
         )
         ''')
         self.db.commit()

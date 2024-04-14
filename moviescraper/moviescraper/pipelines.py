@@ -24,12 +24,10 @@ class MoviescraperPipeline:
         Args:
             spider: spider
         """
-        # select the table that will be used to insert data
-        table = "movies" if spider.is_movie else "series"
         # remove all rows from the table
-        self.cur.execute(f"DELETE FROM {table}")
+        self.cur.execute("DELETE FROM data")
         # reset id column sequence to start from 1
-        self.cur.execute(f"DELETE FROM sqlite_sequence WHERE name='{table}'")
+        self.cur.execute(f"DELETE FROM sqlite_sequence WHERE name='data'")
         self.conn.commit()
         time.sleep(1)
 
@@ -44,14 +42,12 @@ class MoviescraperPipeline:
             debug string
         """
         # select the table that will be used to insert data
-        table = "movies" if item["type"] == "movie" else "series"
         # insert new data into the table
         self.cur.execute(
-            f'INSERT INTO {table} (title, user_score, release_date, url) VALUES (?, ?, ?, ?)',
-            (item["title"], item["user_score"], item["release_date"], item["url"])
+            f'INSERT INTO data (title, user_score, release_date, url, genres, runtime, description, director) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+            (item["title"], item["user_score"], item["release_date"], item["url"], item["genres"], item["runtime"], item["description"], item["director"])
         )
         self.conn.commit()
-        return f"DATABASE INSERT: {item["type"]} '{item["title"]}'"
 
     def close_spider(self, spider):
         """

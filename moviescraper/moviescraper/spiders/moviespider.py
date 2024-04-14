@@ -3,15 +3,21 @@ from moviescraper.moviescraper.items import MovieItem
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.action_chains import ActionChains
+from bs4 import BeautifulSoup
+import requests
 import datetime
-
+import time
+import re
 
 class MoviesSpider(scrapy.Spider):
     name = "moviespider"
     allowed_domains = ["www.themoviedb.org"]
     start_urls = ["https://www.themoviedb.org"]
 
-    def __init__(self, category: int = 1, num_pages: int = 25):
+    def __init__(self, category: int = 1, num_pages: int = 25, genre: str = ""):
         """
         MoviesSpider object initializer
 
@@ -25,14 +31,17 @@ class MoviesSpider(scrapy.Spider):
         # define user agent (necessary due to the --headless option)
         user_agent = 'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)'
         self.options.add_argument(f'user-agent={user_agent}')
+        self.options.add_argument("--start-maximized")
         # run in invisible window
         self.options.add_argument("--headless=new")
         # select page language
         self.options.add_argument("--lang=en")
+        self.options.add_argument("--disable-notifications")
         self.driver = webdriver.Chrome(options=self.options)
         self.is_movie = True if category == 1 else False
         self.category = category
         self.num_pages = num_pages
+        self.genre = genre
 
     def parse(self, response):
         """
@@ -45,72 +54,99 @@ class MoviesSpider(scrapy.Spider):
         """
         # run page in Selenium
         self.driver.get(response.url)
+        actions = ActionChains(self.driver)
+        cookies_accept_xpath = "/html/body/div[9]/div[2]/div/div[1]/div/div[2]/div/button[3]"
+        WebDriverWait(self.driver, 30).until(EC.visibility_of_element_located(
+            (By.XPATH, cookies_accept_xpath)
+        ))
+        cookies = self.driver.find_element(By.XPATH, cookies_accept_xpath)
+        actions.move_to_element(cookies).click().perform()
         # find and click dropdown menu for given category
-        self.driver.find_element(
+        categories = self.driver.find_element(
             By.XPATH,
             f"//ul[contains(@class, 'dropdown_menu') and contains(@class, 'navigation')]/li[{self.category}]"
-        ).click()
+        )
+        actions.move_to_element(categories).click().perform()
         # find link to the top-rated page for given category
+        top_movies_xpath = "//div[@class='k-animation-container']/ul/li[4]/a"
+        WebDriverWait(self.driver, 10).until(EC.visibility_of_element_located(
+            (By.XPATH, top_movies_xpath)
+        ))
         url = self.driver.find_element(
             By.XPATH,
-            "//div[@class='k-animation-container']/ul/li[4]/a"
-        ).get_attribute('href')
-        # add page number to the link (to use pagination instead of dynamically loaded content on scroll)
-        url += "?page=1"
-        # close driver
-        self.driver.close()
-        for i in range(1, self.num_pages):
-            yield scrapy.Request(url,
-                                 callback=self.parse_page,
-                                 cb_kwargs={"page_num": i})
-            # move to the next page url
-            url = url.replace(f"page={i}", f"page={i+1}")
+            top_movies_xpath
+        )
+        if self.genre:
+            actions.move_to_element(url).click().perform()
+            genre_xpath = f"//ul[@id='with_genres']/li/a[contains(text(), '{self.genre}')]"
+            WebDriverWait(self.driver, 10).until(EC.visibility_of_element_located(
+                (By.XPATH, genre_xpath)
+            ))
+            genre = self.driver.find_element(By.XPATH, genre_xpath)
+            actions.move_to_element(genre).click().perform()
+            search_btn_xpath = "//p[@class='load_more']/a[contains(@class, 'no_click') and contains(@class, 'load_more')]"
+            WebDriverWait(self.driver, 10).until(EC.element_to_be_clickable(
+                (By.XPATH, search_btn_xpath)
+            ))
+            search_btn = self.driver.find_element(By.XPATH, search_btn_xpath)
+            actions.move_to_element(search_btn).click().perform()
 
-    def parse_page(self, response, page_num: int):
+        load_more_btn_xpath = "//p[@class='load_more']/a[contains(@class, 'no_click') and contains(@class, 'load_more')]"
+        load_more_btn = self.driver.find_element(By.XPATH, load_more_btn_xpath)
+        self.driver.execute_script("window.scrollBy(0, document.body.scrollHeight);")
+        self.driver.execute_script("arguments[0].click();", load_more_btn)
+
+        loaded_content_xpath = "/html/body/div[1]/main/section/div/div/div/div[2]/div[2]/div/section/div/div[2]"
+        WebDriverWait(self.driver, 10).until(EC.visibility_of_element_located(
+            (By.XPATH, loaded_content_xpath)
+        ))
+
+        for i in range(1, self.num_pages + 1):
+            page_urls = self.get_urls(page_num=i)
+            for url in page_urls:
+                yield scrapy.Request(url,
+                                     callback=self.parse_page)
+            # move to the next page url
+            self.log(f"Scrapped page {i}")
+            self.driver.execute_script("window.scrollBy(0, document.body.scrollHeight);")
+        time.sleep(10)
+
+    def parse_page(self, response):
         """
         Parses category page
 
         Args:
             response: page response
-            page_num (int): current page number
 
         Yields:
             MovieItem object
         """
-        # initialize driver for page
-        page_driver = webdriver.Chrome(options=self.options)
-        page_driver.get(response.url)
-        # find all movies/series
-        items = page_driver.find_elements(
+        movie_item = MovieItem()
+
+        headers = {
+            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
+        }
+        soup = BeautifulSoup(requests.get(response.url + "?language=en",headers=headers).text, "html.parser")
+
+        movie_item["title"] = soup.select(f".title")[0].select("h2")[0].select("a")[0].text
+        movie_item["release_date"] = soup.select("span.release")[0].text.strip()
+        movie_item["genres"] = ", ". join([item.text for item in soup.select("span.genres")[0].findAll('a')])
+        movie_item["runtime"] = soup.select("span.runtime")[0].text.strip()
+        movie_item["user_score"] = int(soup.select("div.user_score_chart")[0].attrs["data-percent"])
+        movie_item["description"] = soup.select("div.overview")[0].select("p")[0].text
+        movie_item["director"] = ", ".join([item.select('p')[0].text for item in soup.select("ol.people.no_image")[0].select("li") if "Director" in item.select("p.character")[0].text])
+        movie_item["url"] = response.url
+        yield movie_item
+
+    def get_urls(self, page_num):
+        urls = []
+        content_xpath = f"//div[contains(@class, 'media_items') and contains(@class, 'results')]/div[@id='page_{page_num}']/div[contains(@class, 'card') and contains(@class, 'style_1') and not(contains(@class, 'filler'))]"
+        items = self.driver.find_elements(
             By.XPATH,
-            f"//div[contains(@class, 'media_items') and contains(@class, 'results')]/div[@id='page_{page_num}']"
-            f"/div[contains(@class, 'card') and contains(@class, 'style_1') and not(contains(@class, 'filler'))]"
+            content_xpath
         )
         for item in items:
-            # get content div
             content = item.find_element(By.XPATH, "./div[@class='content']")
-            # initialize new MovieItem object to store movie/series data
-            movie_item = MovieItem()
-            # set all movie_items fields
-            movie_item["type"] = "movie" if self.is_movie else "series"
-            movie_item["title"] = content.find_element(
-                By.XPATH,
-                "./h2/a"
-            ).get_attribute('title')
-            movie_item["user_score"] = int(content.find_element(
-                By.XPATH,
-                "./div[contains(@class, 'consensus') and contains(@class, 'tight')]/div[@class='outer_ring']/div"
-            ).get_attribute("data-percent"))
-            # parse release date from 'mmm dd, YYYY' to 'dd/mm/YYYY' format
-            movie_item["release_date"] = datetime.datetime.strptime(
-                content.find_element(By.XPATH, "./p").text,
-                "%b %d, %Y").strftime("%d/%m/%Y")
-            # get movie page url
-            movie_item["url"] = content.find_element(
-                By.XPATH,
-                "./h2/a"
-            ).get_attribute("href")
-            yield movie_item
-        self.log(f"Page {page_num} finished")
-        # close the driver
-        page_driver.close()
+            urls.append(content.find_element(By.XPATH,"./h2/a").get_attribute("href"))
+        return urls
+
