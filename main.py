@@ -13,8 +13,6 @@ process = CrawlerProcess({
     'ITEM_PIPELINES': {'moviescraper.moviescraper.pipelines.MoviescraperPipeline': 300}
 })
 
-done = 0
-
 @app.route('/', methods=['GET', 'POST'])
 def type():
     types_links_dict = movie_or_tv()
@@ -34,7 +32,6 @@ def genres():
 
 @app.route('/scraping', methods=['GET', 'POST'])
 def scraping():
-    global done
     selected_type = session.get('selected_type')
     selected_genre = session.get('selected_genre')
     category = 1 if selected_type == '/movie?language=en' else 2
@@ -47,8 +44,9 @@ def browse():
     title_filter = request.args.get('title', None)
     year_filter = request.args.get('year', None)
     data = get_data()
-    filtered_data = filter_data(data, title_filter, year_filter)
-    return render_template('browse.html', data=filtered_data)
+    is_movie = session.get('selected_type') == '/movie?language=en'
+    filtered_data = filter_data(data, is_movie, title_filter, year_filter)
+    return render_template('browse.html', data=filtered_data, is_movie=is_movie)
 
 if __name__ == '__main__':
     app.run(debug=True)

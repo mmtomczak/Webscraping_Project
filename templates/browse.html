@@ -26,6 +26,14 @@
                         <th>Score</th>
                         <th>Release Date</th>
                         <th>Link</th>
+                        <th>Genres</th>
+                        <th 
+                            {% if is_movie %}style="display: table-cell;"
+                            {% else %}style="display: none;"
+                            {% endif %}>Runtime
+                        </th>
+                        <th>Description</th>
+                        <th>Director</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -36,11 +44,51 @@
                         <td>{{ row[2] }}</td>
                         <td>{{ row[3] }}</td>
                         <td><a href="{{ row[4] }}" target="_blank">Link to the site</a></td>
+                        <td>{{ row[5] }}</td>
+                        <td 
+                            {% if is_movie %}style="display: table-cell;"
+                            {% else %}style="display: none;"
+                            {% endif %}>{{ row[6] }}
+                        </td>
+                        <td>
+                            <div class="description">{{ row[7] }}</div>
+                            <button class="showBtn">Show</button>
+                            <button class="hideBtn" style="display: none;">Hide</button>
+                        </td>
+                        <td>{{ row[8] }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
     </div>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            var showButtons = document.querySelectorAll(".showBtn");
+            var hideButtons = document.querySelectorAll(".hideBtn");
+    
+            showButtons.forEach(function(btn, index) {
+                btn.addEventListener("click", function() {
+                    var description = this.parentNode.querySelector(".description");
+                    var hideBtn = this.parentNode.querySelector(".hideBtn");
+    
+                    description.style.display = "block";
+                    hideBtn.style.display = "inline-block";
+                    this.style.display = "none";
+                });
+            });
+    
+            hideButtons.forEach(function(btn, index) {
+                btn.addEventListener("click", function() {
+                    var description = this.parentNode.querySelector(".description");
+                    var showBtn = this.parentNode.querySelector(".showBtn");
+    
+                    description.style.display = "none";
+                    showBtn.style.display = "inline-block";
+                    this.style.display = "none";
+                });
+            });
+        });
+    </script>
 </body>
 </html>

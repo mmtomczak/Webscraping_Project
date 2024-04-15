@@ -105,3 +105,7 @@ tr:nth-child(even) {
     justify-content: center;
     margin: auto;
 }
+
+.description {
+    display: none;
+}
