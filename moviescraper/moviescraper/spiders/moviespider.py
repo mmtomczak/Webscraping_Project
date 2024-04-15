@@ -83,11 +83,11 @@ class MoviesSpider(scrapy.Spider):
         )
         if self.genre:
             actions.move_to_element(url).click().perform()
+            WebDriverWait(self.driver, 30).until(EC.visibility_of_element_located(
+                (By.XPATH, "//ul[@id='with_genres']/li/a")
+            ))
             for genre in self.genre:
                 genre_xpath = f"//ul[@id='with_genres']/li/a[contains(text(), '{genre}')]"
-                WebDriverWait(self.driver, 30).until(EC.visibility_of_element_located(
-                    (By.XPATH, genre_xpath)
-                ))
                 genre = self.driver.find_element(By.XPATH, genre_xpath)
                 actions.move_to_element(genre).click().perform()
             search_btn_xpath = "//p[@class='load_more']/a[contains(@class, 'no_click') and contains(@class, 'load_more')]"

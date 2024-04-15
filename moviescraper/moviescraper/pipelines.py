@@ -44,7 +44,6 @@ class MoviescraperPipeline:
         Returns:
             debug string
         """
-        # select the table that will be used to insert data
         # insert new data into the table
         self.cur.execute(
             f'INSERT INTO data (title, user_score, release_date, url, genres, runtime, description, director) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
