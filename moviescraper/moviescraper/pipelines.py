@@ -7,6 +7,7 @@
 # useful for handling different item types with a single interface
 import sqlite3
 import time
+from database.database_generator import DatabaseGenerator
 
 
 class MoviescraperPipeline:
@@ -17,6 +18,8 @@ class MoviescraperPipeline:
         # connect to the database to get the connection and cursor objects
         self.conn = sqlite3.connect("database/database.db", check_same_thread=False)
         self.cur = self.conn.cursor()
+        # db = DatabaseGenerator(self.cur, self.conn)
+        # db.recreate_database()
 
     def open_spider(self, spider):
         """

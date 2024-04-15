@@ -1,4 +1,6 @@
 import scrapy
+import selenium.common.exceptions
+
 from moviescraper.moviescraper.items import MovieItem
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -32,7 +34,7 @@ class MoviesSpider(scrapy.Spider):
         self.options.add_argument(f'user-agent={user_agent}')
         self.options.add_argument("--start-maximized")
         # run in invisible window
-        self.options.add_argument("--headless=new")
+        # self.options.add_argument("--headless=new")
         # select page language
         self.options.add_argument("--lang=en")
         self.options.add_argument("--disable-notifications")
@@ -68,7 +70,7 @@ class MoviesSpider(scrapy.Spider):
         actions.move_to_element(categories).click().perform()
         # find link to the top-rated page for given category
         top_movies_xpath = "//div[@class='k-animation-container']/ul/li[4]/a"
-        WebDriverWait(self.driver, 10).until(EC.visibility_of_element_located(
+        WebDriverWait(self.driver, 30).until(EC.visibility_of_element_located(
             (By.XPATH, top_movies_xpath)
         ))
         url = self.driver.find_element(
@@ -79,15 +81,16 @@ class MoviesSpider(scrapy.Spider):
             actions.move_to_element(url).click().perform()
             for genre in self.genre:
                 genre_xpath = f"//ul[@id='with_genres']/li/a[contains(text(), '{genre}')]"
-                WebDriverWait(self.driver, 10).until(EC.visibility_of_element_located(
+                WebDriverWait(self.driver, 30).until(EC.visibility_of_element_located(
                     (By.XPATH, genre_xpath)
                 ))
                 genre = self.driver.find_element(By.XPATH, genre_xpath)
                 actions.move_to_element(genre).click().perform()
             search_btn_xpath = "//p[@class='load_more']/a[contains(@class, 'no_click') and contains(@class, 'load_more')]"
-            WebDriverWait(self.driver, 10).until(EC.element_to_be_clickable(
+            WebDriverWait(self.driver, 30).until(EC.element_to_be_clickable(
                 (By.XPATH, search_btn_xpath)
             ))
+            self.driver.execute_script("window.scrollBy(0, 50);")
             search_btn = self.driver.find_element(By.XPATH, search_btn_xpath)
             actions.move_to_element(search_btn).click().perform()
 
@@ -128,14 +131,21 @@ class MoviesSpider(scrapy.Spider):
         soup = BeautifulSoup(requests.get(response.url + "?language=en",headers=headers).text, "html.parser")
 
         movie_item["title"] = soup.select(f".title")[0].select("h2")[0].select("a")[0].text
-        release_date = soup.select("span.release")[0].text.strip()
+        if self.category == 1:
+            movie_item["runtime"] = soup.select("span.runtime")[0].text.strip()
+            release_date = soup.select("span.release")[0].text.strip()
+        else:
+            movie_item["runtime"] = ""
+            release_date = soup.select("span.release_date.tag")[0].text.strip()
         release_date = re.sub("([ (A-Za-z)])", "", release_date)
         movie_item["release_date"] = release_date
         movie_item["genres"] = ", ". join([item.text for item in soup.select("span.genres")[0].findAll('a')])
-        movie_item["runtime"] = soup.select("span.runtime")[0].text.strip()
         movie_item["user_score"] = int(soup.select("div.user_score_chart")[0].attrs["data-percent"])
         movie_item["description"] = soup.select("div.overview")[0].select("p")[0].text
-        movie_item["director"] = ", ".join([item.select('p')[0].text for item in soup.select("ol.people.no_image")[0].select("li") if "Director" in item.select("p.character")[0].text])
+        try:
+            movie_item["director"] = ", ".join([item.select('p')[0].text for item in soup.select("ol.people.no_image")[0].select("li") if "Director" or "Creator" in item.select("p.character")[0].text])
+        except IndexError:
+            movie_item["director"] = ""
         movie_item["url"] = response.url
         yield movie_item
 

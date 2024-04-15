@@ -38,7 +38,7 @@ def scraping():
     selected_type = session.get('selected_type')
     selected_genre = session.get('selected_genre')
     category = 1 if selected_type == '/movie?language=en' else 2
-    process.crawl(MoviesSpider, category=category, num_pages=1, genre=selected_genre)
+    process.crawl(MoviesSpider, category=category, num_pages=2, genre=selected_genre)
     process.start()
     return redirect(url_for('browse'))
 
