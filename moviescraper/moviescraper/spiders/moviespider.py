@@ -1,5 +1,9 @@
+from typing import Union
+
 import scrapy
 import selenium.common.exceptions
+from scrapy import Spider
+from twisted.internet.defer import Deferred
 
 from moviescraper.moviescraper.items import MovieItem
 from selenium import webdriver
@@ -34,7 +38,7 @@ class MoviesSpider(scrapy.Spider):
         self.options.add_argument(f'user-agent={user_agent}')
         self.options.add_argument("--start-maximized")
         # run in invisible window
-        # self.options.add_argument("--headless=new")
+        self.options.add_argument("--headless=new")
         # select page language
         self.options.add_argument("--lang=en")
         self.options.add_argument("--disable-notifications")
@@ -160,4 +164,7 @@ class MoviesSpider(scrapy.Spider):
             content = item.find_element(By.XPATH, "./div[@class='content']")
             urls.append(content.find_element(By.XPATH, "./h2/a").get_attribute("href"))
         return urls
+
+    def closed(self, reason):
+        self.driver.close()
 
