@@ -7,6 +7,9 @@ import scrapy
 
 
 class MovieItem(scrapy.Item):
+    """
+    MovieItem class used to store information about srapped movie/series
+    """
     title = scrapy.Field()
     genres = scrapy.Field()
     runtime = scrapy.Field()

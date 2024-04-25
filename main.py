@@ -1,17 +1,22 @@
-from flask import Flask, request, render_template, session, redirect, url_for
+import selenium.common.exceptions
+from flask import Flask, request, render_template, session, redirect, url_for, flash
 from beautifulsoup4.bs4_scrapers import movie_or_tv, get_genres
 from scrapy.crawler import CrawlerProcess
 from moviescraper.moviescraper.spiders.moviespider import MoviesSpider
 from database.db_filter import get_data, filter_data
+from twisted.internet.error import ReactorNotRestartable
 
 app = Flask(__name__)
 app.secret_key = 'secretkey'
 
 
 # Create crawl process
+# define user agent, pipelines and logging format
 process = CrawlerProcess({
     'USER_AGENT': 'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)',
-    'ITEM_PIPELINES': {'moviescraper.moviescraper.pipelines.MoviescraperPipeline': 300}
+    'ITEM_PIPELINES': {'moviescraper.moviescraper.pipelines.MoviescraperPipeline': 300},
+    'LOG_FORMAT': '%(levelname)s: %(message)s',
+    'LOG_LEVEL': 'INFO'
 })
 
 
@@ -39,8 +44,15 @@ def scraping():
     selected_type = session.get('selected_type')
     selected_genre = session.get('selected_genre')
     category = 1 if selected_type == '/movie?language=en' else 2
-    process.crawl(MoviesSpider, category=category, num_pages=2, genre=selected_genre)
-    process.start()
+    try:
+        process.crawl(MoviesSpider, category=category, num_pages=4, genre=selected_genre)
+        process.start()
+    except ReactorNotRestartable:
+        flash("Scrapy does not allow to run the spider multiple times - restart the project to scrape different data")
+        return redirect(url_for('browse'))
+    except selenium.common.exceptions.TimeoutException:
+        flash("Page dynamic content navigation exception - restart the project")
+        return redirect(url_for('browse'))
     return redirect(url_for('browse'))
 
 

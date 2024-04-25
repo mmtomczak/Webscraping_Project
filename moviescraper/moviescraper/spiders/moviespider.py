@@ -1,9 +1,5 @@
-from typing import Union
-
 import scrapy
 import selenium.common.exceptions
-from scrapy import Spider
-from twisted.internet.defer import Deferred
 
 from moviescraper.moviescraper.items import MovieItem
 from selenium import webdriver
@@ -48,6 +44,7 @@ class MoviesSpider(scrapy.Spider):
         self.num_pages = num_pages
         self.genre = genre
 
+
     def parse(self, response):
         """
         Parses response
@@ -82,32 +79,55 @@ class MoviesSpider(scrapy.Spider):
             top_movies_xpath
         )
         if self.genre:
+            # if one or more genre is selected apply filter
+            # move to link to the top movies/series page
             actions.move_to_element(url).click().perform()
+            # wait for menu to be visible
             WebDriverWait(self.driver, 30).until(EC.visibility_of_element_located(
                 (By.XPATH, "//ul[@id='with_genres']/li/a")
             ))
             for genre in self.genre:
+                # find every genre button
                 genre_xpath = f"//ul[@id='with_genres']/li/a[contains(text(), '{genre}')]"
                 genre = self.driver.find_element(By.XPATH, genre_xpath)
+                # select the genre
                 actions.move_to_element(genre).click().perform()
+            # find search button and click when it is clickable
             search_btn_xpath = "//p[@class='load_more']/a[contains(@class, 'no_click') and contains(@class, 'load_more')]"
             WebDriverWait(self.driver, 30).until(EC.element_to_be_clickable(
                 (By.XPATH, search_btn_xpath)
             ))
+            # scroll the page
             self.driver.execute_script("window.scrollBy(0, 50);")
             search_btn = self.driver.find_element(By.XPATH, search_btn_xpath)
+            # click the search button
             actions.move_to_element(search_btn).click().perform()
 
+        # load more movies
         load_more_btn_xpath = "//p[@class='load_more']/a[contains(@class, 'no_click') and contains(@class, 'load_more')]"
         load_more_btn = self.driver.find_element(By.XPATH, load_more_btn_xpath)
+        # scroll to the bottom of the page
         self.driver.execute_script("window.scrollBy(0, document.body.scrollHeight);")
+        # click load more button
         self.driver.execute_script("arguments[0].click();", load_more_btn)
-
+        # scroll to load new content
+        self.driver.execute_script("window.scrollBy(0, document.body.scrollHeight);")
         loaded_content_xpath = "/html/body/div[1]/main/section/div/div/div/div[2]/div[2]/div/section/div/div[2]"
-        WebDriverWait(self.driver, 30).until(EC.visibility_of_element_located(
-            (By.XPATH, loaded_content_xpath)
-        ))
-
+        for retry in range(4):
+            # ensure that the new content is loaded
+            self.logger.info(f"Waiting for content - Try no.{retry+1}")
+            try:
+                WebDriverWait(self.driver, 10).until(EC.visibility_of_element_located(
+                    (By.XPATH, loaded_content_xpath)
+                ))
+                self.logger.info(f"Content found")
+                break
+            except selenium.common.exceptions.TimeoutException:
+                # if loaded content not found try to click load more button again after scrolling a page
+                self.driver.execute_script("window.scrollBy(0, -10);")
+                self.driver.execute_script("arguments[0].click();", load_more_btn)
+                self.driver.execute_script("window.scrollBy(0, document.body.scrollHeight);")
+                continue
         for i in range(1, self.num_pages + 1):
             page_urls = self.get_urls(page_num=i)
             for url in page_urls:
@@ -154,6 +174,15 @@ class MoviesSpider(scrapy.Spider):
         yield movie_item
 
     def get_urls(self, page_num):
+        """
+        Returns the urls for movies/series that are present on a given page number
+
+        Args:
+            page_num: number of the page
+
+        Returns:
+            list of str containing urls
+        """
         urls = []
         content_xpath = f"//div[contains(@class, 'media_items') and contains(@class, 'results')]/div[@id='page_{page_num}']/div[contains(@class, 'card') and contains(@class, 'style_1') and not(contains(@class, 'filler'))]"
         items = self.driver.find_elements(
@@ -166,5 +195,8 @@ class MoviesSpider(scrapy.Spider):
         return urls
 
     def closed(self, reason):
+        """
+        Closes the driver when spider closes
+        """
         self.driver.close()
 

@@ -18,6 +18,9 @@
             <input type="submit" value="Filter">
         </form>
         <div class="table-container">
+        {% for msg in get_flashed_messages() %}
+            <h4 class="flash-msg">{{ msg }}</h4>
+        {% endfor %}
             <table>
                 <thead>
                     <tr>
