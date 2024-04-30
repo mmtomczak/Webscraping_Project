@@ -1,3 +1,4 @@
+/* Base styles */
 body {
     font-family: Arial, sans-serif;
     background-color: #f5f5f5;
@@ -5,6 +6,7 @@ body {
     margin-top: 4em;
 }
 
+/* Container styles */
 .container {
     max-width: 800px;
     margin: 0 auto;
@@ -14,50 +16,58 @@ body {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
+/* Heading styles */
 h1 {
     color: #000080; /* Navy color */
-    text-align: center; /* Center the text */
+    text-align: center;
 }
 
+/* Form styles */
 form {
     margin-top: 20px;
-    text-align: center; /* Center the form content */
+    text-align: center;
 }
 
+/* Select styles */
 select {
-    width: 100%; /* Expand the dropdown list to full width of the form */
+    width: 100%;
     padding: 8px 12px;
     border: 1px solid #ccc;
     border-radius: 4px;
 }
 
+/* Submit button styles */
 input[type="submit"] {
-    background-color: #000080; /* Navy color */
+    background-color: #000080;
     color: #fff;
     cursor: pointer;
-    display: block; /* Make the button full width */
-    width: 100%; /* Make the button full width */
-    margin-top: 10px; /* Additional margin spacing */
+    display: block;
+    width: 100%;
+    margin-top: 10px;
 }
 
+/* Submit button active styles */
 input[type="submit"]:active {
-    background-color: #5f5fe3; /* Navy color */
+    background-color: #5f5fe3;
     color: #fff;
-    display: block; /* Make the button full width */
-    width: 100%; /* Make the button full width */
-    margin-top: 10px; /* Additional margin spacing */
+    display: block;
+    width: 100%;
+    margin-top: 10px;
 }
 
+/* Submit button hover styles */
 input[type="submit"]:hover {
-    background-color: #00008b; /* Dark navy color */
+    background-color: #00008b;
 }
 
+/* Disabled button styles */
 input[type=submit]:disabled,
 button:disabled {
     background-color: #343438;
     cursor: not-allowed;
 }
 
+/* Flash message styles */
 .flash-msg {
     color: red;
     font-size: 1em;
@@ -66,6 +76,7 @@ button:disabled {
     align-content: center;
 }
 
+/* Table container styles */
 .table-container {
     width: 95%;
     margin: 0 auto;
@@ -75,38 +86,39 @@ button:disabled {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
+/* Table styles */
 table {
     width: 100%;
     margin: 0 auto;
 }
 
-th, td {
-    padding: 12px;
-    text-align: left;
-    border-bottom: 1px solid #ddd;
-}
-
+/* Table header styles */
 th {
     background-color: #000080;
     color: white;
 }
 
+/* Table row styles */
 tr:nth-child(even) {
     background-color: #f2f2f2;
 }
 
+/* Center alignment styles */
 .center {
     height: 20em;
 }
 
+/* Genre select styles */
 .genre-select {
     height: 100%;
 }
 
+/* Genre submit button styles */
 .genre-submit {
     margin-bottom: 3em;
 }
 
+/* Spinner styles */
 .spinner-border {
     display: block;
     width: 100%;
@@ -114,6 +126,7 @@ tr:nth-child(even) {
     margin: auto;
 }
 
+/* Description hidden by default */
 .description {
     display: none;
 }

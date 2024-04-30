@@ -4,16 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Choose Type</title>
+    <!-- Link to custom CSS file -->
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <!-- Link to Bootstrap CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.4.1/dist/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
 </head>
 <body>
     <div class="container">
+        <!-- Heading -->
         <h1>Choose a Movie or a TV Show</h1>
+        <!-- Form for selecting type -->
         <form method="POST">
+            <!-- Loop through types_links_dict to create radio buttons for each type -->
             {% for key, value in types_links_dict.items() %}
                 <input type="radio" name="type" value="{{ value }}"> {{ key }}<br>
             {% endfor %}
+            <!-- Submit button -->
             <input type="submit" value="Choose">
         </form>
     </div>

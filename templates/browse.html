@@ -4,12 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Browse Data</title>
+    <!-- Link to custom CSS file -->
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <!-- Link to Bootstrap CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.4.1/dist/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
 </head>
 <body>
     <div class="container">
+        <!-- Heading -->
         <h1>Browse and filter your dataset</h1>
+        <!-- Form for filtering data -->
         <form method="GET">
             <label for="title">Filter the title:</label>
             <input type="text" id="title" name="title">
@@ -17,10 +21,13 @@
             <input type="number" id="year" name="year">
             <input type="submit" value="Filter">
         </form>
+        <!-- Container for flash messages -->
         <div class="table-container">
+        <!-- Display flashed messages -->
         {% for msg in get_flashed_messages() %}
             <h4 class="flash-msg">{{ msg }}</h4>
         {% endfor %}
+            <!-- Table to display data -->
             <table>
                 <thead>
                     <tr>
@@ -30,6 +37,7 @@
                         <th>Release Date</th>
                         <th>Link</th>
                         <th>Genres</th>
+                        <!-- Column for movie runtime, displayed conditionally -->
                         <th 
                             {% if is_movie %}style="display: table-cell;"
                             {% else %}style="display: none;"
@@ -40,19 +48,23 @@
                     </tr>
                 </thead>
                 <tbody>
+                    <!-- Loop through data rows -->
                     {% for row in data %}
                     <tr>
                         <td>{{ row[0] }}</td>
                         <td>{{ row[1] }}</td>
                         <td>{{ row[2] }}</td>
                         <td>{{ row[3] }}</td>
+                        <!-- Link to external site -->
                         <td><a href="{{ row[4] }}" target="_blank">Link to the site</a></td>
                         <td>{{ row[5] }}</td>
+                        <!-- Column for movie runtime, displayed conditionally -->
                         <td 
                             {% if is_movie %}style="display: table-cell;"
                             {% else %}style="display: none;"
                             {% endif %}>{{ row[6] }}
                         </td>
+                        <!-- Button to show description as popover -->
                         <td>
                             <button type="button" class="btn btn-dark" data-toggle="popover" title="'{{ row[1] }}' overview" data-content="{{ row[7] }}">Show</button>
                         </td>
@@ -63,9 +75,11 @@
             </table>
         </div>
     </div>
+    <!-- JavaScript libraries -->
     <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.4.1/dist/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
+    <!-- JavaScript function to initialize popover -->
     <script>
         $(function () {
           $('[data-toggle="popover"]').popover()
